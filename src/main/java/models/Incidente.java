@@ -47,32 +47,34 @@ public class Incidente implements Comparable<Incidente> {
         return registradoEn;
     }
 
-    private int usuariosAfectadosTotal(){
-        int sumUsers
+    private int usuariosAfectadosTotal() {
+        int sumUsers = 0;
+        for (ServicioAfectado servicio : servicios) {
+            sumUsers += servicio.usuariosAfectados();
+        }
+        return sumUsers;
     }
 
     @Override
     public int compareTo(Incidente otro) {
-    Comparator<Incidente> comparador = Comparator.comparingInt(Incidente::getSeveridad)
-        .thenComparing(Comparator.comparingInt(Incidente::getMinutosRestantes))
-        // CANTIDAD DE SERVICIOS servicios.size()
-        .thenComparing(
-            Comparator.comparingInt(
-                (Incidente i) -> i.getServicios().size())
-            .reversed())
-        .thenComparing((Incidente i) -> {
-            int sumUserA = 0;
-            for (ServicioAfectado servicioAfectado : i.getServicios()) {
-                sumUserA += servicioAfectado.usuariosAfectados();
-            }
-            return sumUserA;
-        })
-        // .thenComparing(Comparator.comparingInt(Incidente::usuariosAfectadosTotal));
-        .thenComparing(Incidente::getRegistradoEn)
-        .thenComparing(Incidente::getCodigo, String.CASE_INSENSITIVE_ORDER);
+        Objects.requireNonNull(otro, "otro");
 
-    return comparador.compare(this, otro);
-}
+        Comparator<Incidente> comparador = Comparator
+                .comparingInt(Incidente::getSeveridad)
+                .thenComparingInt(Incidente::getMinutosRestantes)
+                .thenComparing(Comparator.comparingInt((Incidente i) -> i.getServicios().size()).reversed())
+                .thenComparing(Comparator.comparingLong((Incidente i) -> {
+                    long totalUsuarios = 0L;
+                    for (ServicioAfectado s : i.getServicios()) {
+                        totalUsuarios += s.usuariosAfectados();
+                    }
+                    return totalUsuarios;
+                }).reversed())
+                .thenComparing(Incidente::getRegistradoEn)
+                .thenComparing(Incidente::getCodigo, String.CASE_INSENSITIVE_ORDER);
+
+        return comparador.compare(this, otro);
+    }
 
     @Override
     public String toString() {
